@@ -1,0 +1,46 @@
+{
+  "name": "kotodama-kyb3rerp",
+  "main": "svelte/.svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2025-03-17",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_als"
+  ],
+  "assets": {
+    "directory": "./svelte/.svelte-kit/cloudflare/client",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "vars": {
+    "APP_ACTOR_HANDLE": "kyber-erp",
+    "APP_CAPABILITIES": "[\"erp-intelligence\",\"accounting\"]",
+    "APP_DESCRIPTION": "Corporate ERP intelligence — AI-driven accounting (GL/AP/AR), HR/payroll, procurement, inventory, sales order management. Multi-DID per department.",
+    "APP_DISPLAY_NAME": "Kyber ERP",
+    "APP_EMBED_URL": "https://kyb3rerp.etzhayyim.com/?embed=1",
+    "APP_FRAMEWORK": "sveltekit-edge-bff",
+    "APP_NANOID": "kyb3rerp",
+    "APP_PERFORMER_TYPE": "service",
+    "APP_UI_TYPE": "appview",
+    "MURAKUMO_URL": "https://murakumo.etzhayyim.com/api/openai/v1/chat/completions",
+    "AGENTGATEWAY_MCP_ROUTER_URL": "https://mcp.etzhayyim.com/xrpc/com.etzhayyim.mcp.message"
+  },
+  "rules": [
+    {
+      "type": "CompiledWasm",
+      "globs": [
+        "**/*.wasm"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "kyb3rerp.etzhayyim.com/*",
+      "zone_name": "etzhayyim.com"
+    },
+    {
+      "pattern": "kyber.etzhayyim.com/*",
+      "zone_name": "etzhayyim.com"
+    }
+  ]
+}

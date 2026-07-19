@@ -1,0 +1,137 @@
+{
+  "@context": "https://etzhayyim.com/ns/kotodama/v1",
+  "@id": "did:web:kyber.etzhayyim.com",
+  "component": {
+    "env": {
+      "MURAKUMO_URL": "https://murakumo.etzhayyim.com/api/openai/v1/chat/completions"
+    }
+  },
+  "convoSystemPrompt": "You are the Kyber ERP agent — a corporate resource planning intelligence platform. You help organizations manage accounting (general ledger, accounts payable/receivable), human resources, procurement, inventory, and sales. Respond with structured ERP data, financial summaries, and operational insights. Support multi-currency, multi-entity consolidation, and regulatory compliance (IFRS/GAAP/JP-GAAP).",
+  "duties": [
+    "勤労の義務"
+  ],
+  "entities": [
+    {
+      "did": "did:web:kyber.etzhayyim.com:dept:accounting",
+      "id": "dept-accounting",
+      "name": "Accounting",
+      "role": "accounting-writer"
+    },
+    {
+      "did": "did:web:kyber.etzhayyim.com:dept:hr",
+      "id": "dept-hr",
+      "name": "Human Resources",
+      "role": "hr-writer"
+    },
+    {
+      "did": "did:web:kyber.etzhayyim.com:dept:procurement",
+      "id": "dept-procurement",
+      "name": "Procurement",
+      "role": "procurement-writer"
+    },
+    {
+      "did": "did:web:kyber.etzhayyim.com:dept:inventory",
+      "id": "dept-inventory",
+      "name": "Inventory",
+      "role": "inventory-writer"
+    },
+    {
+      "did": "did:web:kyber.etzhayyim.com:dept:sales",
+      "id": "dept-sales",
+      "name": "Sales",
+      "role": "sales-writer"
+    },
+    {
+      "did": "did:web:kyber.etzhayyim.com:dept:asset",
+      "id": "dept-asset",
+      "name": "Asset",
+      "role": "asset-writer"
+    },
+    {
+      "did": "did:web:kyber.etzhayyim.com:dept:governance",
+      "id": "dept-governance",
+      "name": "Governance",
+      "role": "governance-writer"
+    }
+  ],
+  "governance": {
+    "raci": "responsible",
+    "classification": "internal",
+    "complianceFrameworks": [
+      "kyber-policy"
+    ]
+  },
+  "kpi": [
+    "credits の獲得"
+  ],
+  "name": "kyber",
+  "nanoid": "kyb3rerp",
+  "performerType": "service",
+  "profile": {
+    "agentType": "autonomous",
+    "avatar": "KE",
+    "capabilities": [
+      "erp-intelligence",
+      "accounting"
+    ],
+    "category": "business",
+    "description": "Corporate ERP intelligence — AI-driven accounting (GL/AP/AR), HR/payroll, procurement, inventory, sales order management. Multi-DID per department.",
+    "displayName": "Kyber ERP",
+    "isBot": true,
+    "operator": "etzhayyim.com"
+  },
+  "project": "kyber",
+  "runtimeType": "worker",
+  "space": {
+    "channels": [
+      {
+        "default": true,
+        "description": "ERP activity feed",
+        "kind": "public",
+        "name": "erp-feed"
+      },
+      {
+        "description": "Accounting & finance updates",
+        "kind": "public",
+        "name": "finance-feed"
+      },
+      {
+        "description": "HR & payroll updates",
+        "kind": "public",
+        "name": "hr-feed"
+      },
+      {
+        "description": "Procurement & inventory updates",
+        "kind": "public",
+        "name": "supply-chain-feed"
+      }
+    ],
+    "description": "Corporate ERP intelligence — accounting, HR, procurement, inventory, sales",
+    "historyVisibility": "world-readable",
+    "joinRule": "public",
+    "name": "Kyber ERP"
+  },
+  "triggers": {
+    "subscribeRepos": {
+      "collections": [
+        "com.etzhayyim.apps.kyber.journalEntry",
+        "com.etzhayyim.apps.kyber.account",
+        "com.etzhayyim.apps.kyber.invoice",
+        "com.etzhayyim.apps.kyber.employee",
+        "com.etzhayyim.apps.kyber.purchaseOrder",
+        "com.etzhayyim.apps.kyber.inventoryItem",
+        "com.etzhayyim.apps.kyber.salesOrder",
+        "com.etzhayyim.apps.kyber.integrationBinding",
+        "com.etzhayyim.apps.mailer.mailerEvent",
+        "com.etzhayyim.apps.calendar.invitation",
+        "com.etzhayyim.apps.apqc.apqcEvent",
+        "com.etzhayyim.apps.kyber.collectionJob",
+        "app.bsky.feed.post",
+        "app.bsky.feed.like",
+        "app.bsky.feed.repost",
+        "app.bsky.graph.follow"
+      ]
+    }
+  },
+  "uiType": "appview"
+}

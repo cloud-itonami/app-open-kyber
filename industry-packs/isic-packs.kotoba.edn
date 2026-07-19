@@ -1,0 +1,364 @@
+;; isic-packs — ISIC Rev.4 INDUSTRY PACK registry for open-kyber (Kyber ERP)
+;; ADR-2606037200 · consumed by the erp-ontology (00-contracts/schemas/erp-ontology.kotoba.edn)
+;;
+;; PURPOSE
+;;   The base open-kyber ERP is generic (the 8 core modules: accounting / ap-ar / hr /
+;;   procurement / inventory / sales / asset / governance). The founder directive of
+;;   2026-06-03 is "ISIC のすべての産業にそれぞれ対応した ERP" — every industry gets an ERP
+;;   tailored to it. Rather than 428 forked ERPs, we ship ONE base + a PACK OVERLAY per
+;;   ISIC Rev.4 section (21 packs, A..U) plus higher-resolution DIVISION packs where a
+;;   section is too coarse (e.g. A splits farming vs fishing; C splits food vs metal vs
+;;   electronics; K splits banking vs insurance). A tenant declares its ISIC activity
+;;   codes (:erp.tenant/isic-codes); the loader resolves the matching pack(s) by
+;;   section/division and writes :erp.tenant/active-packs. Records created thereafter carry
+;;   :erp/isic-pack so coverage + compliance can be reported per industry.
+;;
+;; WHAT A PACK CONTAINS (overlay, additive — never removes a base module)
+;;   :pack/modules-emphasis  — which base modules matter most + which get sector behaviour
+;;   :pack/doc-types         — sector document types surfaced in suite/docs + drive
+;;   :pack/uom               — units of measure the inventory module accepts (extends base)
+;;   :pack/coa-ext           — chart-of-accounts extensions (sector-specific accounts)
+;;   :pack/compliance        — gov.control frameworks pre-seeded for the sector
+;;   :pack/kpis              — the dashboard metrics that matter for the sector
+;;   :pack/actor-link        — etzhayyim Tier-B actor(s) whose domain this ISIC section is
+;;                             (so the ERP for, e.g., agriculture aligns with sanae/mitsuho)
+;;
+;; SUBSTRATE: pack definitions are kotoba Datoms in graph "kyber-erp-v1" (visibility
+;;   :public — pack DEFINITIONS are open catalog; only a tenant's ACTIVATION is :tenant).
+;;   Money/decimal as STRING. No RisingWave. Murakumo-only for any pack-suggested AI assist
+;;   (NL→journal templates per sector). All packs Apache-2.0 + Charter Rider.
+;;
+;; MATURITY: R0 = the 21 section packs + a first wave of high-value division packs are
+;;   DECLARED here with real overlays; the loader + per-pack seed CoA land in the kotoba
+;;   TS layer over the next iterations. Honest: overlays are :representative starting points,
+;;   not a chartered-accountant's sector CoA. Division/class packs fill in incrementally.
+
+{:schema/id      "isic-packs"
+ :schema/version "0.1.0"
+ :schema/adr     "2606037200"
+ :schema/note    "21 ISIC Rev.4 section packs (A..U) + high-value division packs. Section→pack resolution mirrors open-isic sectionForDivision (60-apps/etzhayyim-project-open-isic/kotoba/src/types.ts). A tenant with no declared ISIC code falls back to the generic base (no pack)."
+ :graph          {:name "kyber-erp-v1" :visibility :public}
+
+ ;; ── section packs (21) ────────────────────────────────────────────────────
+ :packs
+ [{:isic.pack/id "pack/A" :isic.pack/section "A" :isic.pack/scope :section
+   :pack/name "Agriculture, forestry and fishing"
+   :pack/modules-emphasis [:inventory :asset :procurement]
+   :pack/doc-types [:harvest-record :field-log :livestock-register :catch-log :traceability-cert]
+   :pack/uom ["ha" "head" "kg" "ton" "liter" "crate"]
+   :pack/coa-ext [{:code "5100" :name "Seed & Feed" :type :expense}
+                  {:code "1250" :name "Biological Assets (livestock/crops)" :type :asset}
+                  {:code "4100" :name "Crop & Livestock Sales" :type :revenue}]
+   :pack/compliance ["GAP" "Organic-JAS" "GlobalG.A.P" "traceability"]
+   :pack/kpis [:yield-per-ha :spoilage-rate :input-cost-per-unit :soil-carbon]
+   :pack/actor-link ["sanae" "mitsuho" "suki"]}
+
+  {:isic.pack/id "pack/B" :isic.pack/section "B" :isic.pack/scope :section
+   :pack/name "Mining and quarrying"
+   :pack/modules-emphasis [:asset :inventory :governance]
+   :pack/doc-types [:extraction-log :assay-report :reserve-statement :safety-incident]
+   :pack/uom ["ton" "m3" "carat" "barrel" "oz"]
+   :pack/coa-ext [{:code "1700" :name "Mineral Reserves" :type :asset}
+                  {:code "5200" :name "Site Restoration Provision" :type :expense}]
+   :pack/compliance ["ISO-14001" "mine-safety" "EITI-transparency"]
+   :pack/kpis [:extraction-volume :reserve-life :restoration-liability]
+   :pack/actor-link ["kanayama"]}
+
+  {:isic.pack/id "pack/C" :isic.pack/section "C" :isic.pack/scope :section
+   :pack/name "Manufacturing"
+   :pack/modules-emphasis [:inventory :procurement :sales :asset]
+   :pack/doc-types [:bom :work-order :routing :quality-cert :ncr]
+   :pack/uom ["pcs" "kg" "m" "m2" "lot" "hour"]
+   :pack/coa-ext [{:code "1210" :name "Raw Materials" :type :asset}
+                  {:code "1220" :name "Work in Process" :type :asset}
+                  {:code "1230" :name "Finished Goods" :type :asset}
+                  {:code "5300" :name "Manufacturing Overhead" :type :expense}]
+   :pack/compliance ["ISO-9001" "IATF-16949" "RoHS" "REACH"]
+   :pack/kpis [:oee :scrap-rate :wip-turns :on-time-delivery :cost-per-unit]
+   :pack/actor-link ["sarutahiko" "igata" "yakushi" "hataori" "funadaiku" "giemon"]}
+
+  {:isic.pack/id "pack/D" :isic.pack/section "D" :isic.pack/scope :section
+   :pack/name "Electricity, gas, steam and air conditioning supply"
+   :pack/modules-emphasis [:asset :sales :governance]
+   :pack/doc-types [:meter-reading :tariff-schedule :ppa :grid-balance-report]
+   :pack/uom ["kWh" "MWh" "MW" "m3-gas" "GJ"]
+   :pack/coa-ext [{:code "1800" :name "Grid Infrastructure" :type :asset}
+                  {:code "4200" :name "Energy Sales (kWh)" :type :revenue}
+                  {:code "2400" :name "Renewable Obligation" :type :liability}]
+   :pack/compliance ["grid-code" "ISO-50001" "renewable-certificate"]
+   :pack/kpis [:load-factor :saidi :saifi :renewable-share :unbilled-energy]
+   :pack/actor-link ["hikari"]}
+
+  {:isic.pack/id "pack/E" :isic.pack/section "E" :isic.pack/scope :section
+   :pack/name "Water supply; sewerage, waste management and remediation"
+   :pack/modules-emphasis [:asset :inventory :governance]
+   :pack/doc-types [:treatment-log :discharge-permit :waste-manifest :quality-test]
+   :pack/uom ["m3" "ton" "ppm" "liter"]
+   :pack/coa-ext [{:code "1810" :name "Treatment Plant & Network" :type :asset}
+                  {:code "4250" :name "Tariff & Gate Fees" :type :revenue}]
+   :pack/compliance ["discharge-permit" "ISO-14001" "manifest-chain-of-custody"]
+   :pack/kpis [:nrw-rate :treatment-compliance :diversion-rate]
+   :pack/actor-link ["mizuho" "hodoki" "haraedo"]}
+
+  {:isic.pack/id "pack/F" :isic.pack/section "F" :isic.pack/scope :section
+   :pack/name "Construction"
+   :pack/modules-emphasis [:procurement :asset :governance :sales]
+   :pack/doc-types [:boq :progress-billing :rfi :submittal :retention-cert :punch-list]
+   :pack/uom ["m2" "m3" "ton" "lot" "day"]
+   :pack/coa-ext [{:code "1240" :name "Construction in Progress" :type :asset}
+                  {:code "2410" :name "Retention Payable" :type :liability}
+                  {:code "4300" :name "Contract Revenue (POC)" :type :revenue}]
+   :pack/compliance ["building-code" "ISO-45001" "lien-waiver"]
+   :pack/kpis [:percent-complete :cost-to-complete :change-order-ratio :retention-held]
+   :pack/actor-link ["tatekata" "giemon"]}
+
+  {:isic.pack/id "pack/G" :isic.pack/section "G" :isic.pack/scope :section
+   :pack/name "Wholesale and retail trade; repair of motor vehicles"
+   :pack/modules-emphasis [:sales :inventory :ap-ar]
+   :pack/doc-types [:pos-receipt :return-slip :stock-transfer :price-list]
+   :pack/uom ["pcs" "case" "pallet" "kg"]
+   :pack/coa-ext [{:code "4000" :name "Merchandise Sales" :type :revenue}
+                  {:code "5000" :name "Cost of Goods Sold" :type :expense}
+                  {:code "4050" :name "Sales Returns & Allowances" :type :revenue}]
+   :pack/compliance ["consumer-protection" "GTIN-labeling"]
+   :pack/kpis [:gross-margin :inventory-turns :sell-through :basket-size]
+   :pack/actor-link ["okaimono"]}
+
+  {:isic.pack/id "pack/H" :isic.pack/section "H" :isic.pack/scope :section
+   :pack/name "Transportation and storage"
+   :pack/modules-emphasis [:asset :sales :inventory]
+   :pack/doc-types [:waybill :bill-of-lading :manifest :dispatch-sheet :customs-decl]
+   :pack/uom ["km" "ton-km" "teu" "m3" "pallet"]
+   :pack/coa-ext [{:code "1820" :name "Fleet & Rolling Stock" :type :asset}
+                  {:code "4350" :name "Freight & Logistics Revenue" :type :revenue}
+                  {:code "5400" :name "Fuel & Maintenance" :type :expense}]
+   :pack/compliance ["IMO-MASS" "ADR-dangerous-goods" "customs"]
+   :pack/kpis [:on-time-rate :load-factor :cost-per-ton-km :fleet-utilization]
+   :pack/actor-link ["wadachi" "funadaiku" "watatsumi" "haraedo"]}
+
+  {:isic.pack/id "pack/I" :isic.pack/section "I" :isic.pack/scope :section
+   :pack/name "Accommodation and food service activities"
+   :pack/modules-emphasis [:sales :inventory :hr]
+   :pack/doc-types [:menu :recipe-card :reservation :shift-roster :food-safety-log]
+   :pack/uom ["cover" "room-night" "kg" "portion" "liter"]
+   :pack/coa-ext [{:code "4400" :name "F&B / Room Revenue" :type :revenue}
+                  {:code "5050" :name "Food & Beverage Cost" :type :expense}]
+   :pack/compliance ["HACCP" "food-hygiene" "occupancy-license"]
+   :pack/kpis [:revpar :food-cost-pct :table-turns :occupancy]
+   :pack/actor-link ["mitsuho"]}
+
+  {:isic.pack/id "pack/J" :isic.pack/section "J" :isic.pack/scope :section
+   :pack/name "Information and communication"
+   :pack/modules-emphasis [:sales :ap-ar :hr]
+   :pack/doc-types [:subscription :sla :sprint-record :content-license]
+   :pack/uom ["seat" "month" "gb" "api-call" "hour"]
+   :pack/coa-ext [{:code "1320" :name "Deferred Subscription Cost" :type :asset}
+                  {:code "2500" :name "Deferred Revenue" :type :liability}
+                  {:code "4450" :name "Recurring (SaaS) Revenue" :type :revenue}]
+   :pack/compliance ["ISO-27001" "privacy-APPI/GDPR" "SLA"]
+   :pack/kpis [:mrr :arr :churn :nrr :gross-margin]
+   :pack/actor-link ["kataribe" "tsutae"]}
+
+  {:isic.pack/id "pack/K" :isic.pack/section "K" :isic.pack/scope :section
+   :pack/name "Financial and insurance activities"
+   :pack/modules-emphasis [:accounting :governance :ap-ar]
+   :pack/doc-types [:loan-schedule :policy-doc :claim :statement :kyc-record]
+   :pack/uom ["contract" "policy" "bp" "unit"]
+   :pack/coa-ext [{:code "1900" :name "Loans & Advances" :type :asset}
+                  {:code "2600" :name "Technical Provisions / Reserves" :type :liability}
+                  {:code "4500" :name "Interest & Premium Income" :type :revenue}]
+   :pack/compliance ["Basel" "IFRS-9" "IFRS-17" "AML/KYC" "FSA"]
+   :pack/kpis [:nim :loss-ratio :combined-ratio :car :npl-ratio]
+   :pack/actor-link ["warifu" "kawase" "wakai" "toritate"]}
+
+  {:isic.pack/id "pack/L" :isic.pack/section "L" :isic.pack/scope :section
+   :pack/name "Real estate activities"
+   :pack/modules-emphasis [:asset :ap-ar :sales]
+   :pack/doc-types [:lease :rent-roll :cam-recon :appraisal :title-doc]
+   :pack/uom ["m2" "unit" "month"]
+   :pack/coa-ext [{:code "1830" :name "Investment Property" :type :asset}
+                  {:code "4550" :name "Rental Income" :type :revenue}
+                  {:code "2510" :name "Tenant Deposits" :type :liability}]
+   :pack/compliance ["lease-accounting-IFRS-16" "property-registry"]
+   :pack/kpis [:occupancy :noi :cap-rate :rent-collection]
+   :pack/actor-link ["shidemori"]}
+
+  {:isic.pack/id "pack/M" :isic.pack/section "M" :isic.pack/scope :section
+   :pack/name "Professional, scientific and technical activities"
+   :pack/modules-emphasis [:sales :hr :ap-ar]
+   :pack/doc-types [:engagement-letter :timesheet :deliverable :wip-report]
+   :pack/uom ["hour" "day" "engagement"]
+   :pack/coa-ext [{:code "1330" :name "Unbilled WIP (services)" :type :asset}
+                  {:code "4600" :name "Professional Fees" :type :revenue}]
+   :pack/compliance ["professional-license" "conflict-of-interest" "ISO-9001"]
+   :pack/kpis [:utilization :realization :wip-days :avg-bill-rate]
+   :pack/actor-link ["chigiri" "toritate" "sumitsubo" "manabi"]}
+
+  {:isic.pack/id "pack/N" :isic.pack/section "N" :isic.pack/scope :section
+   :pack/name "Administrative and support service activities"
+   :pack/modules-emphasis [:hr :sales :procurement]
+   :pack/doc-types [:service-contract :work-ticket :sla :roster]
+   :pack/uom ["ticket" "hour" "headcount" "month"]
+   :pack/coa-ext [{:code "4650" :name "Service Contract Revenue" :type :revenue}
+                  {:code "5450" :name "Subcontracted Labor" :type :expense}]
+   :pack/compliance ["labor-dispatch-law" "ISO-9001"]
+   :pack/kpis [:sla-attainment :fill-rate :cost-per-ticket]
+   :pack/actor-link ["kiyome" "haraedo"]}
+
+  {:isic.pack/id "pack/O" :isic.pack/section "O" :isic.pack/scope :section
+   :pack/name "Public administration and defence; compulsory social security"
+   :pack/modules-emphasis [:accounting :governance]
+   :pack/doc-types [:appropriation :budget-line :grant :procurement-notice]
+   :pack/uom ["case" "beneficiary" "fiscal-year"]
+   :pack/coa-ext [{:code "3100" :name "Appropriations / Fund Balance" :type :equity}
+                  {:code "4700" :name "Grants & Transfers Received" :type :revenue}]
+   :pack/compliance ["fund-accounting" "public-procurement" "transparency"]
+   :pack/kpis [:budget-execution :outlay-rate :grant-utilization]
+   :pack/actor-link ["danjo" "kanae" "ooyake" "toritsugi"]}
+
+  {:isic.pack/id "pack/P" :isic.pack/section "P" :isic.pack/scope :section
+   :pack/name "Education"
+   :pack/modules-emphasis [:sales :hr :ap-ar]
+   :pack/doc-types [:enrollment :transcript :course-catalog :tuition-invoice :grant-report]
+   :pack/uom ["student" "credit-hour" "term" "seat"]
+   :pack/coa-ext [{:code "4750" :name "Tuition & Fees" :type :revenue}
+                  {:code "2520" :name "Deferred Tuition" :type :liability}]
+   :pack/compliance ["accreditation" "student-privacy" "grant-restriction"]
+   :pack/kpis [:enrollment :completion-rate :cost-per-student :grant-burn]
+   :pack/actor-link ["manabi"]}
+
+  {:isic.pack/id "pack/Q" :isic.pack/section "Q" :isic.pack/scope :section
+   :pack/name "Human health and social work activities"
+   :pack/modules-emphasis [:sales :inventory :hr :governance]
+   :pack/doc-types [:claim :eob :encounter :formulary :consent-record]
+   :pack/uom ["encounter" "bed-day" "dose" "case"]
+   :pack/coa-ext [{:code "1340" :name "Patient Receivables (net)" :type :asset}
+                  {:code "4800" :name "Patient & Payer Revenue" :type :revenue}
+                  {:code "5060" :name "Pharmaceutical & Supplies" :type :expense}]
+   :pack/compliance ["HIPAA/APPI-PHI" "GMP" "medical-device" "ISO-13485"]
+   :pack/kpis [:occupancy :denial-rate :days-in-ar :cost-per-encounter]
+   :pack/actor-link ["iyashi" "yakushi" "kizashi" "hagukumi" "kokoro"]}
+
+  {:isic.pack/id "pack/R" :isic.pack/section "R" :isic.pack/scope :section
+   :pack/name "Arts, entertainment and recreation"
+   :pack/modules-emphasis [:sales :ap-ar :inventory]
+   :pack/doc-types [:ticket :royalty-statement :event-settlement :rights-license]
+   :pack/uom ["ticket" "show" "stream" "seat"]
+   :pack/coa-ext [{:code "4850" :name "Box Office & Royalties" :type :revenue}
+                  {:code "2530" :name "Deferred Ticket Revenue" :type :liability}]
+   :pack/compliance ["rights-clearance" "safety-permit"]
+   :pack/kpis [:attendance :yield-per-seat :royalty-payout]
+   :pack/actor-link ["kataribe"]}
+
+  {:isic.pack/id "pack/S" :isic.pack/section "S" :isic.pack/scope :section
+   :pack/name "Other service activities"
+   :pack/modules-emphasis [:sales :hr]
+   :pack/doc-types [:membership :service-record :repair-ticket]
+   :pack/uom ["member" "service" "hour"]
+   :pack/coa-ext [{:code "4900" :name "Membership & Service Revenue" :type :revenue}]
+   :pack/compliance ["association-law" "consumer-protection"]
+   :pack/kpis [:member-retention :service-margin]
+   :pack/actor-link ["musubi" "shidemori" "kurashimori"]}
+
+  {:isic.pack/id "pack/T" :isic.pack/section "T" :isic.pack/scope :section
+   :pack/name "Activities of households as employers"
+   :pack/modules-emphasis [:hr :accounting]
+   :pack/doc-types [:domestic-employment-record :payroll-stub :household-budget]
+   :pack/uom ["hour" "month"]
+   :pack/coa-ext [{:code "5500" :name "Household Wages" :type :expense}]
+   :pack/compliance ["domestic-labor-protection"]
+   :pack/kpis [:household-cost]
+   :pack/actor-link ["hagukumi" "kiyome"]}
+
+  {:isic.pack/id "pack/U" :isic.pack/section "U" :isic.pack/scope :section
+   :pack/name "Activities of extraterritorial organizations and bodies"
+   :pack/modules-emphasis [:accounting :governance]
+   :pack/doc-types [:grant :assessed-contribution :country-program :audit-report]
+   :pack/uom ["program" "country" "fiscal-year"]
+   :pack/coa-ext [{:code "4700" :name "Assessed & Voluntary Contributions" :type :revenue}
+                  {:code "3100" :name "Fund Balance (restricted)" :type :equity}]
+   :pack/compliance ["IPSAS" "donor-restriction" "anti-fraud"]
+   :pack/kpis [:contribution-collection :program-delivery :overhead-ratio]
+   :pack/actor-link ["kanae"]}]
+
+ ;; ── high-value DIVISION packs (refine a section where it is too coarse) ────
+ ;; resolution: a tenant ISIC code's 2-digit division matches the division pack
+ ;; FIRST; the section pack always also applies (overlays compose, division wins
+ ;; on conflicting CoA codes).
+ ;; Division CoA EXTENSIONS (sector-specific accounts beyond the section ext —
+ ;; e.g. C21 GMP batch costing, K64 interbank book, K65 unearned-premium reserve)
+ ;; are the runtime `DIVISION_COA_EXT` map in kotoba/src/isic-packs.ts; the
+ ;; section-level `:pack/coa-ext` below stays the inline doc reference.
+ :division-packs
+ [{:isic.pack/id "pack/A01" :isic.pack/section "A" :isic.pack/scope :division
+   :pack/division "01" :pack/name "Crop and animal production"
+   :pack/uom ["ha" "head" "kg" "ton"] :pack/kpis [:yield-per-ha :feed-conversion]
+   :pack/actor-link ["sanae" "suki"]}
+  {:isic.pack/id "pack/A03" :isic.pack/section "A" :isic.pack/scope :division
+   :pack/division "03" :pack/name "Fishing and aquaculture"
+   :pack/uom ["ton" "kg" "vessel-day"] :pack/kpis [:catch-per-vessel-day :quota-utilization]
+   :pack/actor-link ["funadaiku" "watatsumi"]}
+  {:isic.pack/id "pack/C10" :isic.pack/section "C" :isic.pack/scope :division
+   :pack/division "10" :pack/name "Manufacture of food products"
+   :pack/uom ["kg" "ton" "batch" "case"] :pack/compliance ["HACCP" "ISO-22000"]
+   :pack/kpis [:batch-yield :giveaway-pct] :pack/actor-link ["mitsuho" "yakushi"]}
+  {:isic.pack/id "pack/C21" :isic.pack/section "C" :isic.pack/scope :division
+   :pack/division "21" :pack/name "Manufacture of pharmaceuticals"
+   :pack/uom ["batch" "dose" "kg"] :pack/compliance ["GMP" "ICH-Q7" "serialization"]
+   :pack/kpis [:batch-release-time :deviation-rate] :pack/actor-link ["yakushi"]}
+  {:isic.pack/id "pack/C26" :isic.pack/section "C" :isic.pack/scope :division
+   :pack/division "26" :pack/name "Manufacture of computer, electronic and optical products"
+   :pack/uom ["pcs" "wafer" "lot"] :pack/compliance ["IPC" "RoHS" "REACH"]
+   :pack/kpis [:yield :ppm-defect :test-coverage] :pack/actor-link ["iwakura" "tsukuru"]}
+  {:isic.pack/id "pack/C29" :isic.pack/section "C" :isic.pack/scope :division
+   :pack/division "29" :pack/name "Manufacture of motor vehicles"
+   :pack/uom ["pcs" "vehicle" "lot"] :pack/compliance ["IATF-16949"]
+   :pack/kpis [:jph :first-pass-yield :ppm-defect] :pack/actor-link ["sarutahiko" "igata"]}
+  {:isic.pack/id "pack/F41" :isic.pack/section "F" :isic.pack/scope :division
+   :pack/division "41" :pack/name "Construction of buildings"
+   :pack/uom ["m2" "m3" "lot"] :pack/compliance ["building-code" "ISO-45001"]
+   :pack/kpis [:percent-complete :cost-to-complete] :pack/actor-link ["tatekata" "giemon"]}
+  {:isic.pack/id "pack/H49" :isic.pack/section "H" :isic.pack/scope :division
+   :pack/division "49" :pack/name "Land transport"
+   :pack/uom ["km" "ton-km"] :pack/compliance ["ADR-dangerous-goods"]
+   :pack/kpis [:on-time-rate :cost-per-ton-km] :pack/actor-link ["wadachi"]}
+  {:isic.pack/id "pack/H50" :isic.pack/section "H" :isic.pack/scope :division
+   :pack/division "50" :pack/name "Water transport"
+   :pack/uom ["teu" "nm" "vessel-day"] :pack/compliance ["IMO-MASS" "SOLAS"]
+   :pack/kpis [:on-time-rate :load-factor] :pack/actor-link ["funadaiku" "watatsumi"]}
+  {:isic.pack/id "pack/I55" :isic.pack/section "I" :isic.pack/scope :division
+   :pack/division "55" :pack/name "Accommodation"
+   :pack/uom ["room-night"] :pack/compliance ["occupancy-license"]
+   :pack/kpis [:revpar :occupancy] :pack/actor-link ["mitsuho"]}
+  {:isic.pack/id "pack/J62" :isic.pack/section "J" :isic.pack/scope :division
+   :pack/division "62" :pack/name "Computer programming and IT services"
+   :pack/uom ["seat" "month" "hour"] :pack/compliance ["ISO-27001" "SLA"]
+   :pack/kpis [:mrr :nrr :utilization] :pack/actor-link ["kataribe" "tsutae"]}
+  {:isic.pack/id "pack/K64" :isic.pack/section "K" :isic.pack/scope :division
+   :pack/division "64" :pack/name "Financial service activities (banking)"
+   :pack/uom ["account" "contract" "bp"] :pack/compliance ["Basel" "IFRS-9" "AML/KYC"]
+   :pack/kpis [:nim :npl-ratio :car] :pack/actor-link ["warifu" "kawase"]}
+  {:isic.pack/id "pack/K65" :isic.pack/section "K" :isic.pack/scope :division
+   :pack/division "65" :pack/name "Insurance and reinsurance"
+   :pack/uom ["policy" "claim"] :pack/compliance ["IFRS-17" "solvency"]
+   :pack/kpis [:loss-ratio :combined-ratio] :pack/actor-link ["wakai"]}
+  {:isic.pack/id "pack/P85" :isic.pack/section "P" :isic.pack/scope :division
+   :pack/division "85" :pack/name "Education"
+   :pack/uom ["student" "credit-hour" "term"] :pack/compliance ["accreditation" "student-privacy"]
+   :pack/kpis [:enrollment :completion-rate] :pack/actor-link ["manabi"]}
+  {:isic.pack/id "pack/Q86" :isic.pack/section "Q" :isic.pack/scope :division
+   :pack/division "86" :pack/name "Human health activities"
+   :pack/uom ["encounter" "bed-day" "dose"] :pack/compliance ["HIPAA/APPI-PHI" "ISO-13485"]
+   :pack/kpis [:occupancy :denial-rate] :pack/actor-link ["iyashi" "kizashi"]}]
+
+ ;; ── section→pack resolution table (mirrors open-isic sectionForDivision) ───
+ ;; division 2-digit ranges → ISIC section letter. The loader uses this to map a
+ ;; tenant's declared ISIC codes to section packs (and tries division-packs first).
+ :section-ranges
+ [{:from 1  :to 3  :section "A"} {:from 5  :to 9  :section "B"} {:from 10 :to 33 :section "C"}
+  {:from 35 :to 35 :section "D"} {:from 36 :to 39 :section "E"} {:from 41 :to 43 :section "F"}
+  {:from 45 :to 47 :section "G"} {:from 49 :to 53 :section "H"} {:from 55 :to 56 :section "I"}
+  {:from 58 :to 63 :section "J"} {:from 64 :to 66 :section "K"} {:from 68 :to 68 :section "L"}
+  {:from 69 :to 75 :section "M"} {:from 77 :to 82 :section "N"} {:from 84 :to 84 :section "O"}
+  {:from 85 :to 85 :section "P"} {:from 86 :to 88 :section "Q"} {:from 90 :to 93 :section "R"}
+  {:from 94 :to 96 :section "S"} {:from 97 :to 98 :section "T"} {:from 99 :to 99 :section "U"}]}

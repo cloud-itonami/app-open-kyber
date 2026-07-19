@@ -1,0 +1,16 @@
+{
+  "actor": "kyber-erp-core",
+  "did": "did:web:etzhayyim.com:actor:kyber",
+  "artifact": "target/wasm32-wasip2/release/kyber_erp_core.wasm",
+  "built_with": "rustc stable (wasm32-wasip2) + wit-bindgen 0.36",
+  "format": "wasm-component (WASI Preview 2), world kotoba:kais/kotoba-node",
+  "exports": ["run(ctx-cbor: list<u8>) -> result<list<u8>, string>"],
+  "imports": ["kotoba:kais/kqe@0.1.0", "kotoba:kais/auth@0.1.0"],
+  "cid": "bafkreigdcmd54zval3z7xwmvmq5tgbsu6rpbxx4gtyhswxhvvfkaltaomi",
+  "cid_codec": "raw (single-block CIDv1)",
+  "size_bytes": 121823,
+  "exec_tier": "T2 donated-mesh (component run via jco; e7m-wasm-runner / kotoba host)",
+  "browser_local": false,
+  "note": "WASM component (run ABI), so executed via e7m-wasm-runner / kotoba host (jco transpile), NOT the ameno raw-core compute() loader — despite the small raw CID. State writes go to the kotoba Datom log via the kqe host import. R3 PoC of ADR-2606037200 (worker-as-WASM-actor); full 28-command port pending.",
+  "adr": "2606037200"
+}

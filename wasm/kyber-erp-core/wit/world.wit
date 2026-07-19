@@ -1,0 +1,44 @@
+/// kotoba:kais — vendored SUBSET for the kyber-erp-core actor (ADR-2606037200 R3).
+///
+/// Self-contained copy of the `kqe` + `auth` interfaces from the canonical kotoba host
+/// WIT (`40-engine/kotoba/crates/kotoba-runtime/wit/world.wit`, package kotoba:kais@0.1.0).
+/// The signatures are byte-identical to the host so the component links against the live
+/// kotoba runtime; only the interfaces this actor actually imports are vendored (kqe for the
+/// Datom log, auth for the acting DID). The kotoba host provides the full set — a component
+/// importing a subset is satisfiable. The world exports `run(ctx-cbor)`, the entry the
+/// KotobaRuntime / e7m-wasm-runner calls per Invoke.
+package kotoba:kais@0.1.0;
+
+interface kqe {
+    record quad {
+        graph:     string,
+        subject:   string,
+        predicate: string,
+        /// CBOR-encoded QuadObject (Cid/Integer/Float/Text/Bytes/VectorF32/TensorCid)
+        object-cbor: list<u8>,
+    }
+
+    assert-quad: func(q: quad) -> result<_, string>;
+    retract-quad: func(q: quad) -> result<_, string>;
+    query: func(datalog-src: string) -> result<list<quad>, string>;
+    get-objects: func(graph: string, subject: string, predicate: string) -> list<list<u8>>;
+    get-head: func(graph-name: string) -> option<string>;
+    evaluate-rules: func(rules-cbor: list<u8>) -> result<list<quad>, string>;
+}
+
+interface auth {
+    current-did: func() -> string;
+    verify-cacao: func(cacao-cbor: list<u8>) -> result<string, string>;
+    has-capability: func(resource-uri: string, ability: string) -> bool;
+}
+
+/// Subset world: the kyber ERP actor imports the Datom log + identity, exports `run`.
+world kotoba-node {
+    import kqe;
+    import auth;
+
+    /// Entry point called by KotobaRuntime / e7m-wasm-runner per Invoke.
+    /// ctx-cbor: this actor's invoke contract is UTF-8 JSON `{ "method": string, "args": {...} }`
+    /// (the multi-command dispatch envelope). Returns UTF-8 JSON bytes.
+    export run: func(ctx-cbor: list<u8>) -> result<list<u8>, string>;
+}

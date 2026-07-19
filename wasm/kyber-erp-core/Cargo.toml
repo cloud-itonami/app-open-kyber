@@ -1,0 +1,37 @@
+# kyber-erp-core — open-kyber ERP as a kotoba `kotoba-node` WASM actor (ADR-2606037200 R3 PoC)
+#
+# Migrates the ERP off the Cloudflare TS Worker into a content-addressed WASM actor that the
+# kotoba host / e7m-wasm-runner stores on IPFS (by CID) and runs, writing the canonical ERP
+# state straight into the kotoba Datom log via the `kqe` host import (NOT XRPC→PDS, NOT a CF
+# Worker). Multi-command dispatch over the `run(ctx_cbor)` export (the pattern that did not
+# previously exist for a stateful multi-command service).
+#
+# Build (component, requires wasm32-wasip2):
+#   rustup target add wasm32-wasip2
+#   cargo build --target wasm32-wasip2 --release
+# Output: target/wasm32-wasip2/release/kyber_erp_core.wasm  (WASM Component, WASI Preview 2)
+# CID:    ipfs add -Q --only-hash --cid-version=1 <wasm>
+#
+# Standalone project (empty [workspace]) so the wasm32 target does not contaminate any native
+# host workspace — mirrors orgs/etzhayyim/com-etzhayyim-kanae/verify/kanae-fiscal-ingest.
+[package]
+name    = "kyber-erp-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[workspace]
+
+[dependencies]
+wit-bindgen = { version = "0.36", default-features = false, features = ["macros"] }
+serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1", default-features = false, features = ["alloc"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,7 @@
+{
+  "name": "kyber",
+  "nanoid": "kyb3rerp",
+  "project": "kyber",
+  "type": "worker",
+  "runtime": "worker"
+}
