@@ -1,1 +1,1 @@
-{:schema "etzhayyim.repository/readme-v1" :name "com-etzhayyim-app-open-kyber" :kind :application :source "etzhayyim/root/60-apps/etzhayyim-project-open-kyber"}
+{:schema "etzhayyim.repository/readme-v1" :name "app-open-kyber" :kind :application :source "etzhayyim/root/60-apps/etzhayyim-project-open-kyber"}
