@@ -1,24 +1,25 @@
 {
   "name": "kotodama-kyb3rerp",
-  "main": "svelte/.svelte-kit/cloudflare/_worker.js",
+  // Compiled from src/openkyber/worker.cljs by shadow-cljs (:target :esm).
+  // Before the cljs migration this pointed at svelte/.svelte-kit/cloudflare/_worker.js
+  // -- a SvelteKit build output that is not in the tree and cannot be produced from it
+  // (svelte/package.json's dependencies are `workspace:*`; there is no workspace here).
+  // See docs/adr/0001.
+  "main": "../dist/worker.js",
   "compatibility_date": "2025-03-17",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "nodejs_als"
-  ],
-  "assets": {
-    "directory": "./svelte/.svelte-kit/cloudflare/client",
-    "binding": "ASSETS",
-    "html_handling": "auto-trailing-slash",
-    "not_found_handling": "none"
-  },
+  // "compatibility_flags": ["nodejs_compat", "nodejs_als"] were adapter-cloudflare's
+  // (SvelteKit). Removed after checking the bundle serves every route without them in
+  // workerd -- see docs/operator-quickstart.md S4.6. Not removed on a guess.
+  //
+  // "assets" pointed at ./svelte/.svelte-kit/cloudflare/client, which the migration
+  // removed along with the rest of the SvelteKit tree.
   "vars": {
     "APP_ACTOR_HANDLE": "kyber-erp",
     "APP_CAPABILITIES": "[\"erp-intelligence\",\"accounting\"]",
     "APP_DESCRIPTION": "Corporate ERP intelligence — AI-driven accounting (GL/AP/AR), HR/payroll, procurement, inventory, sales order management. Multi-DID per department.",
     "APP_DISPLAY_NAME": "Kyber ERP",
     "APP_EMBED_URL": "https://kyb3rerp.etzhayyim.com/?embed=1",
-    "APP_FRAMEWORK": "sveltekit-edge-bff",
+    "APP_FRAMEWORK": "cljs-esm-worker",
     "APP_NANOID": "kyb3rerp",
     "APP_PERFORMER_TYPE": "service",
     "APP_UI_TYPE": "appview",
