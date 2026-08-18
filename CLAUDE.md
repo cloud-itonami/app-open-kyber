@@ -17,35 +17,45 @@
 
 ## Folder Layout
 
+**This block describes the monorepo layout this repository was extracted FROM.
+The extracted repository (`cloud-itonami/app-open-kyber`) is not that shape** — the
+projector appview was not carried over, and the ERP appview migrated to ClojureScript
+on 2026-08-19 (`docs/adr/0001`). The actual tree is below.
+
 ```
-60-apps/etzhayyim-project-open-kyber/
-├── CLAUDE.md                                   # this file
-├── PROJECT.jsonld                              # schema.org (Apache-2.0)
-├── README.md                                   # OSS public readme
-├── etzhayyim-wasm-kyber-erp-kyb3rerp/            # ERP Worker (kyber.etzhayyim.com, nanoid kyb3rerp)
-│   ├── kotodama.jsonld                         # AI-Agent profile + triggers
-│   ├── wrangler.jsonc                          # CF Worker config
-│   ├── package.json
-│   ├── src/app.ts                              # single-file ERP business logic (24 XRPC commands)
-│   ├── svelte/                                 # Hono + Svelte read/write SPA
-│   └── e2e/                                    # Playwright visual tests
-└── etzhayyim-wasm-kyber-projector-kyb3proj/      # APQC/BPMN/OCEL projector (kyber-projector.etzhayyim.com)
-    ├── kotodama.jsonld                         # 13 entities[] for path-based L1 DIDs
-    ├── wrangler.jsonc
-    ├── package.json
-    └── src/app.ts                              # APQC_L1 + BPMN_CATALOG + 6 XRPC commands + onCommit
+app-open-kyber/                                 # this repository
+├── CLAUDE.md · README.md · README.edn · migration.edn
+├── src/openkyber/route.cljc                    # 判断（どの handler が答えるか）
+├── src/openkyber/view.cljc                     # ページ（jp-go-dds の hiccup）
+├── src/openkyber/worker.cljs                   # Request/Response に触る唯一の層
+├── test/openkyber/route_test.cljc
+├── deps.edn · shadow-cljs.edn                  #   ↓ shadow-cljs :target :esm
+│                                               # dist/worker.js (generated, gitignored)
+├── scripts/{smoke-worker,verify-docs-claims}.cljs
+├── docs/{operator-quickstart.md,adr/}
+├── etzhayyim-wasm-kyber-erp-kyb3rerp/          # Worker config only, after the migration
+│   ├── wrangler.jsonc                          #   main -> ../dist/worker.js
+│   ├── kotodama.jsonld                         #   AI-Agent profile + department DIDs
+│   └── etzhayyim.json
+├── kotoba/                                     # the ERP domain library (TypeScript, ALIVE —
+│                                               #   not the appview, not migrated; see README)
+├── industry-packs/isic-packs.kotoba.edn
+└── wasm/kyber-erp-core/                        # Rust WASM actor for the kotoba host path
 ```
+
+The projector (`etzhayyim-wasm-kyber-projector-kyb3proj/`) is **not in this repository**;
+the Projector column below documents the monorepo deployment, not anything here.
 
 ## App Identity
 
-| Key | ERP | Projector |
+| Key | ERP | Projector (not in this repo) |
 |---|---|---|
 | **nanoid** | `kyb3rerp` | `kyb3proj` |
 | **AT bot DID** | `did:web:kyber.etzhayyim.com` | `did:web:kyber-projector.etzhayyim.com` |
-| **Runtime** | TS Native (`src/app.ts` + `@etzhayyim/kotodama-host-sdk` → esbuild) | TS Native |
-| **Write path** | `sdk.pds.dispatch({ type: "com.atproto.repo.createRecord", ... })` | same + `com.etzhayyim.apps.apqc.apqcEvent` OCEL emit |
-| **Read path** | `createKyselyDb(env.HYPERDRIVE)` | Kysely + Hyperdrive |
-| **UI** | Hono + Svelte CSR | headless (XRPC only) |
+| **Runtime** | ClojureScript (`src/openkyber/worker.cljs` → shadow-cljs `:target :esm` → `dist/worker.js`) | TS Native |
+| **Write path** | none — the Worker relays `/xrpc/:nsid` to the MCP router and implements no ERP command | same + `com.etzhayyim.apps.apqc.apqcEvent` OCEL emit |
+| **Read path** | none — see above. The ERP read/write implementation is the `kotoba/` library, which does not go through this Worker | Kysely + Hyperdrive |
+| **UI** | server-rendered page on `jp-go-dds` (デジタル庁デザインシステム) | headless (XRPC only) |
 
 ## OSS License Split
 
@@ -142,28 +152,37 @@ ERP write (createJournalEntry etc.)
 
 ## Build & Deploy
 
-```bash
-# ERP
-cd 60-apps/etzhayyim-project-open-kyber/etzhayyim-wasm-kyber-erp-kyb3rerp
-pnpm install
-e7m actor deploy .
-
-# Projector
-cd 60-apps/etzhayyim-project-open-kyber/etzhayyim-wasm-kyber-projector-kyb3proj
-pnpm install
-e7m actor deploy .
-```
-
-## Svelte SPA
+The appview is ClojureScript. `shadow-cljs` compiles `src/openkyber/worker.cljs`
+to `dist/worker.js`, which is what `wrangler.jsonc`'s `main` points at.
 
 ```bash
-cd 60-apps/etzhayyim-project-open-kyber/etzhayyim-wasm-kyber-erp-kyb3rerp/svelte
-pnpm install
-pnpm build
-pnpm start
+# high-load builds are serialised workspace-wide -- go through the guard
+node ~/github/com-junkawasaki/scripts/resource-guard.mjs run build -- \
+  npx shadow-cljs release worker
+npx nbb scripts/smoke-worker.cljs dist/worker.js     # exercise the built bundle
+cd etzhayyim-wasm-kyber-erp-kyb3rerp && npx wrangler deploy
 ```
 
-Hono server serves `dist/` and fallbacks to `index.html`. Svelte SPA calls `/xrpc/com.etzhayyim.apps.kyber.*` on the same Worker origin.
+Full walkthrough with real output: `docs/operator-quickstart.md`.
+
+The projector deploy (`e7m actor deploy .` in `…-kyb3proj`) applies to the monorepo,
+not to this repository — that appview is not here.
+
+## There is no Svelte SPA
+
+Until 2026-08-19 this section described `svelte/` as a "Hono + Svelte read/write SPA"
+built with `pnpm build`. Both halves were false, and the migration removed the tree:
+
+- The SvelteKit half (`svelte/src/routes/`) **was** what `wrangler.jsonc` deployed, but
+  its `package.json` dependencies are `workspace:*` and this repository has no
+  workspace, so the build output `main` pointed at could not be produced here at all.
+- The 7-app SPA half (`svelte/index.html` → `src/main.ts` → `App.svelte` →
+  `src/apps/*.svelte`) was in **no** bundle: `vite.config.ts` loads the `sveltekit()`
+  plugin, which takes its entry from `src/app.html` + `src/routes/` and never reads a
+  root `index.html`; nothing under `src/routes/` imports `App.svelte`.
+
+The page is now server-rendered by `src/openkyber/view.cljc` on `jp-go-dds`. See
+`docs/adr/0001` for the measurements.
 
 ## Relationship to Other Projects
 

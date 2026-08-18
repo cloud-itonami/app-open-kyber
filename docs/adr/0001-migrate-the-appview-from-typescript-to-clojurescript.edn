@@ -1,0 +1,233 @@
+[{:db/id -1
+  :adr/id "app-open-kyber-0001"
+  :adr/title "appview を TypeScript/Svelte から ClojureScript へ移す（そして kotoba/ は移さない）"
+  :adr/status "accepted"
+  :adr/date "2026-08-19"
+  :adr/doc_type "adr"
+  :adr/source-format "edn"
+  :adr/body "
+# ADR-0001: appview を TypeScript/Svelte から ClojureScript へ移す
+
+**Status**: accepted / **Date**: 2026-08-19 / **Deciders**: Jun Kawasaki
+
+## Context — 測定（2026-08-19、tree 0431db0）
+
+追跡 126 ファイル。TypeScript 70 本、`.svelte` 8 本、`.cljs`/`.cljc` 0 本。
+
+### 発見 1 — deploy される handler は、この repo からビルドできない
+
+`etzhayyim-wasm-kyber-erp-kyb3rerp/wrangler.jsonc` の `main` は
+`svelte/.svelte-kit/cloudflare/_worker.js`（SvelteKit のビルド出力）で、tree に無い。
+ここまでは fleet の既知クラスだが、この repo はもう一段悪い ——
+**その出力をこの repo で生成することもできない**。`svelte/package.json` の依存
+`@etzhayyim/design-system` と `@etzhayyim/kyber-calendar-frontend` は `workspace:*`
+で、この repo に workspace は無い（実測: `npm install` →
+`EUNSUPPORTEDPROTOCOL Unsupported URL Type \"workspace:\"`）。
+
+いちばんアプリケーションらしいファイル `src/app.ts`（896 行、『TS Native Worker:
+28 XRPC commands』を名乗る）は `main` が指しておらず、依存
+`@etzhayyim/kotodama-host-sdk` / `@etzhayyim/open-kyber-kotoba` も同じく
+`workspace:*` で解決しない。参照しているのは `package.json` の `main` 欄と
+docs のコメントだけである。
+
+### 発見 2 — `svelte/` の中に app が 2 つあり、どちらも deploy されていなかった
+
+brief が予告していなかった形。
+
+1. **SvelteKit**（`src/routes/+page.svelte` + `src/routes/xrpc/[...path]/+server.ts`
+   + `src/app.html` + `svelte.config.js` の adapter-cloudflare）—— `main` が指して
+   いたのはこれのビルド出力。**deploy 対象ではあった**（ビルドできないが）。
+2. **7-app の Vite SPA**（`index.html` → `src/main.ts` → `App.svelte` →
+   `src/apps/{Appview,Drive,Mailer,Organizer,Overview,Projector}.svelte` +
+   `src/lib/{apps,store.svelte,xrpc}.ts`）—— `CLAUDE.md` が『Hono + Svelte
+   read/write SPA』と呼んでいたもの。**どの bundle にも入っていない**:
+   `vite.config.ts` は `sveltekit()` プラグインを読み込んでおり、SvelteKit は
+   entry を `src/app.html` + `src/routes/` から取ってルートの `index.html` を
+   読まない。そして `src/routes/` 配下から `App.svelte` への import は **0 件**。
+
+`e2e/`（Playwright smoke + visual + 11 PNG スナップショット）が検査していたのは
+**2 の方**である（`Kyber Command Center` と 7 つの app タブを期待する）。
+deploy されていた 1 のページは `Kyber Erp Kyb3rerp` と `Routes 0` を表示する。
+**検査していた対象と deploy されていた対象が別だった。**
+
+### 発見 3 — 公開ページが自分の設定と矛盾している
+
+`svelte/src/routes/+page.svelte` は訪問者に `Routes 0` と表示し、
+『No public route is declared next to this app surface』
+『No public vars are declared in the nearest wrangler config』と書く。
+同じディレクトリの `wrangler.jsonc` は route 2 本・var 11 個を宣言している。
+値は生成物ではなく `+page.svelte` に literal で焼かれており、`relativePath` は
+抽出前の monorepo パスのままである。
+
+### 発見 4 — 設計文書が現状と合っていない
+
+`CLAUDE.md` の Folder Layout は projector appview
+（`etzhayyim-wasm-kyber-projector-kyb3proj/`）を含むが、**この repo に無い**
+（抽出時に運ばれなかった）。App Identity 表は Runtime を
+『TS Native (`src/app.ts` + `@etzhayyim/kotodama-host-sdk` → esbuild)』、UI を
+『Hono + Svelte CSR』、Read path を `createKyselyDb(env.HYPERDRIVE)` と書く。
+ルート `README.md` は ERP Worker を『the deployed XRPC surface
+（com.etzhayyim.apps.kyber.*）』と書くが、deploy されていた面が持つ server route は
+MCP router への中継 1 本だけである。
+
+## Decision
+
+**appview を ClojureScript に移し、appview の TypeScript と Svelte を撤去する。**
+
+    src/openkyber/route.cljc    判断（どの handler が答えるか）
+    src/openkyber/view.cljc     ページ（jp-go-dds の hiccup）
+    src/openkyber/worker.cljs   Request/Response に触る唯一の層
+            ↓ shadow-cljs :target :esm
+    dist/worker.js              wrangler.jsonc の main が指すもの
+
+先例は同じ org の `cloud-itonami/app-ongakuka` と
+`cloud-itonami-marketplace-listing`。入口を `.kotoba` ではなく cljs に置くのは
+ADR-2606290000 の判断で、kotoba の ingress capability が `:native-aot` /
+`:wasm-aot` とも pending だからである。判断を `.cljc` に切り出してあるのは、
+ブラウザもビルドも無しにテストするためであり、ingress が qualify した時に
+最初に `.kotoba` へ移る部分だからでもある。
+
+### `kotoba/` は移さない —— これは省略ではなく決定である
+
+この repo の TypeScript 70 本のうち **59 本は appview ではない**。
+`kotoba/`（34 モジュール + 24 テスト + `vitest.config.ts`）は ERP のドメイン
+ライブラリで、複式簿記 GL・AP/AR・支払消込・期末締め・BS/PL/CF・移動平均在庫・
+多通貨・消費税/VAT・予算・エイジング・固定資産・監査・ISIC packs を持つ。
+
+**これは dead code ではない。** 測定:
+
+- 依存が実在して取得できる。`@etzhayyim/sdk` / `@etzhayyim/sdk-mock` は git URL で、
+  pin された SHA は実在する commit である（`git fetch <url> <sha>` →
+  `type=commit` で確認。**GitHub API は使っていない** —— 実在する commit に対して
+  断続的に 404 を返すことが計測されているため）。`pnpm install` は 1 つ目を実際に
+  取得し `@etzhayyim/sdk@0.1.0-alpha` として読んだ。
+- 自分の `package.json` / `tsconfig.json` / `vitest.config.ts` / テスト 24 本を持つ。
+- **移行が置き換える対象から参照されていない。** 参照していたのは `src/app.ts`
+  だが、それ自体がどの bundle にも入っていない。
+
+したがって『TypeScript を全部消す』という指示があってもこれは消さない。消すのは
+移行ではなく破壊である。検証器はこのライブラリのファイル数（62）を **両方向の柵**
+として固定する —— 黙って増えることも、黙って消えることもできない。
+
+移すには `@etzhayyim/sdk` の cljs 面が要る。それは別の決定である。
+
+**テストスイートは走らせていない。** pnpm 10 は git-hosted な `@etzhayyim/sdk` の
+build script を `onlyBuiltDependencies` allowlist 無しでは実行せず
+（`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`）、この repo に `pnpm-workspace.yaml` は
+無い。**移行対象外の component を書き換えて回避することはしなかった。**
+`kotoba/README.md` の『19 files, 88 tests』もルート README の『23 files, 100 tests』
+も、この移行では検証していない（実測のテスト**ファイル**数は 24）。
+
+### 撤去したもの — 45 ファイル
+
+| パス | 何 | 測定した理由 |
+|---|---|---|
+| `…/svelte/` (21) | SvelteKit app + 7-app SPA | 発見 1・2 |
+| `…/src/app.ts` (1) | 896 行 | `main` が指さない。依存が `workspace:*` |
+| `…/package.json` `…/package-lock.json` (2) | 上の宣言 | `scripts` を持たないので `pnpm build` も走らない |
+| `…/e2e/` (15) | Playwright + 11 PNG | 撤去する SPA を検査していた。宛先も NXDOMAIN |
+| `…/Dockerfile` `…/.dockerignore` (2) | node コンテナ packaging | 撤去する `package.json` を COPY し、存在しない `pnpm build` を実行し、誰も作らない `dist/index.js` を起動する。`.svelte-kit` を ignore する SvelteKit 時代の生成物 |
+
+`e2e/` と `Dockerfile` の撤去は brief が名指していない判断である。どちらも
+**撤去する対象を検査/梱包するもの**で、残せば永久に赤い suite と、COPY 先が無い
+Dockerfile が残る。理由を README に測定つきで書いた。
+
+`wrangler.jsonc` は意図的に変更した: `main` の付け替え、消えた SvelteKit client を
+指す `assets` の撤去、`APP_FRAMEWORK` を `sveltekit-edge-bff` → `cljs-esm-worker`、
+`compatibility_flags`（`nodejs_compat` / `nodejs_als`、adapter-cloudflare 由来）の
+撤去。**flags は憶測で消していない** —— workerd（`wrangler dev --local`）を flags
+無しで起こし、全 route を叩いて確かめてから撤去した（下記 検証）。
+
+`rules` の `CompiledWasm` は**残した**。撤去された何も指していないし、
+`wasm/kyber-erp-core/` は別経路（kotoba host）の実在物である。
+
+### これで消えた欠陥
+
+- 発見 1 は構造的に消えた。`main` が指す bundle は `src/` からコンパイルされ、
+  依存は `deps.edn` に宣言され、再現可能にビルドできる。
+- 発見 2 も消えた。app は 1 つで、それが deploy される。
+- 発見 3 も構造的に消えた。ページは route 表（`openkyber.route/routes`）を引数で
+  受け取って描く。表示と実際に答えるものが同じ 1 つの値から出る。
+- 発見 4 は文書を直した（`CLAUDE.md` の Folder Layout・App Identity・Svelte SPA 節、
+  ルート `README.md`）。projector が此処に無いことも明記した。
+
+### 移行前の面との差分（黙って変えていない）
+
+| | 移行前（SvelteKit） | 移行後 | なぜ |
+|---|---|---|---|
+| `/xrpc/a/b` | 転送（rest parameter `[...path]`、空だけ 400） | **同じ** | 1 セグメントに絞るのは移行ではなく方針変更 |
+| 呼び手のヘッダ | `host` だけ落として上流へ引き継ぐ | **同じ** | 落とすと `authorization` が届かなくなる |
+| `x-etzhayyim-bff` | `sveltekit-edge-bff` | `cljs-worker` | BFF の実装を名乗るヘッダ。SvelteKit でなくなった後も名乗るのは嘘 |
+| 中継先が到達不能 | fetch を try で囲っておらず未処理例外 → 500 | **502 + 試した URL** | 成功と同じ形に潰さない |
+| `/health` | 無い | 200 JSON | **追加**（移植ではない。migrated sibling repos と揃えた） |
+
+### UI
+
+基盤は jp-go-digital-design-system（skill kotoba-uiux が定める新規 UI の base）。
+色・寸法は `--hig-*` トークン契約のみ、raw hex も px フォントサイズも無し、
+app 固有 CSS は 3 行。CSS は `shadow.resource/inline` で bundle に焼く
+（design system の外部リクエストゼロ方針）。決定論的 audit で 100.00 / 100
+（gate 95）、`--extra-axes` の 12 軸でも 100.00。
+
+## 検証（この ADR を書いた時点で実際に通したもの）
+
+- `openkyber.route-test`: **6 tests / 28 assertions、0 failures**（nbb、ビルド不要）
+- ページ描画 → design-quality **100.00**、gate PASS（10 軸）、`--extra-axes` でも 100.00
+- `scripts/verify-docs-claims.cljs`: 全 claim PASS、exit 0
+- ビルド: `shadow-cljs release worker` が **55 files / 12 compiled / 0 warnings** で
+  通り、`dist/worker.js`（246,518 バイト）を出した
+- `scripts/smoke-worker.cljs` がその bundle を import して **21 項目**を確認
+- **workerd（`wrangler dev --local`）で実際に起こした**: `GET /` 200 text/html
+  （DADS の CSS 45 箇所と route 表を含む）/ `GET /health` 200
+  `{\"ok\":true,\"app\":\"open-kyber\",\"runtime\":\"cljs\",\"routes\":[…]}` /
+  `POST /xrpc/` 400 / `OPTIONS /xrpc/x` 204 / `GET /nope` 404 / `POST /health` 405。
+  `compatibility_flags` の撤去はこの実測の後に行った。
+
+### 落ちることを確かめた（mutation）
+
+『緑を見た』では検査になっていないので、各 gate を実際に赤にした。詳細は
+docs/operator-quickstart.md S6。当てた mutation と、落ちた検査:
+
+1. `route/dispatch` を存在しない var に改名 → **ビルドが exit 1**、`dist/worker.js` は
+   1 バイトも動かない（`:warnings-as-errors` が無ければ exit 0 で出荷していた）
+2. `(rc/inline \"jp_go_dds/dds.css\")` → `\"\"` で再ビルド → smoke の
+   `page carries the stylesheet itself` **だけ**が赤、`page uses the design system
+   components` は緑のまま（この 2 本が別の主張であることの実演）
+3. view が env の値を漏らす → `page hides other var values` が赤
+4. 中継先の表示を消す → `page shows the relay target it uses` が赤
+5. route 表を固定値で描く → unit test と `page-renders-route-table` claim が赤
+6. `.ts` を撤去したパスに戻す / 別名で入れる → `removed-by-migration-absent` /
+   `appview-ts-files` がそれぞれ赤
+7. `kotoba/` からファイルを 1 本消す → `kotoba-library-files` /
+   `kotoba-library-ts-files` が赤（柵が両方向に効く）
+8. `:warnings-as-errors` を `:build-options` へ移す → 検証器の
+   `warnings-as-errors-in-compiler-options` / `no-build-options-key` が赤。
+   **さらに測った**: その状態で 1 と同じ壊し方を当てると、ビルドは **exit 0 で通り
+   warning を 7 行出して bundle を書いた**。`:compiler-options` に在れば exit 1 で
+   止まる。置き場所を間違えると、この option が防ぐはずの失敗そのものになる。
+
+なお 8 は**最初、当て損ねて緑だった**（置換文字列が一致しておらず mutation が
+ファイルに入っていなかった）。外した mutation の緑を実演と数えないという規律に
+従って、EDN として読み直して mutation が実在することを確かめてから当て直した。
+
+mutation は **1 つずつ**当てた。2 つ同時だと互いを隠すことがある（先行 repo の実測:
+値漏洩と中継先の 2 つを同時に当てたら、漏れた値の中に中継先 URL が入っていたため
+『中継先が出ている』が緑のままだった）。復元後は毎回 `rm -rf .shadow-cljs` して
+cold cache から再ビルドし、bundle の sha256 が mutation 前と一致することを確認した
+（shadow の `:esm` 出力は cold cache からのみ byte 再現する）。
+
+## Consequences
+
+- **appview の TypeScript は 0 本、正本言語が 4 本**になった（移行前は appview に
+  TS 11 本 + `.svelte` 8 本、正本言語 0 本）。
+- **`kotoba/` の 59 本の TypeScript は在る。** これは移行漏れではなく決定であり、
+  検証器がファイル数を両方向に固定している。
+- 継承した 4 ファイル（`README.edn` / `migration.edn` / `kotodama.jsonld` /
+  `etzhayyim.json`）は 1 バイトも変えていない（sha256 を検証器に固定）。
+  `wrangler.jsonc` と `CLAUDE.md` は意図的に変更したので、hash ではなく**内容**で
+  検査する —— 意図的な変更と勝手な変更を区別するため。
+- **Worker と ERP ライブラリは繋がっていない。** 移行前も繋がっていなかった
+  （繋ぐはずの `src/app.ts` がビルドできなかった）。移行はこれを直さない。
+- ホストは相変わらず NXDOMAIN（`kyb3rerp` / `kyber` / `mcp` / `murakumo`、いずれも
+  `.etzhayyim.com`）。deploy するか retire するかは別の決定。
+"}]
