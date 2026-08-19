@@ -50,22 +50,18 @@
    "access-control-max-age" "86400"})
 
 (defn- upstream-headers
-  "移行前の `+server.ts` と同じヘッダの組み立て: **呼び手のヘッダをそのまま
-  引き継ぎ**、`host` を落とし、content-type と 2 つの `x-etzhayyim-*` を被せる。
+  "呼び手のヘッダをそのまま引き継いで上流へ渡す。何を落とすかの判断は
+  `route/relay-headers` にある —— そこは `.cljc` なので、渡るものと落ちるもの
+  をビルド無しにテストできる。
 
   引き継ぎを落とすと `authorization` が上流に届かなくなる —— それは移行では
-  なく方針変更なので、ここではしない。
-
-  `x-etzhayyim-bff` の**値だけ**は変えた（`sveltekit-edge-bff` →
-  `cljs-worker`）。このヘッダは BFF の実装を名乗るためのもので、SvelteKit で
-  なくなった後も SvelteKit を名乗り続けるのは単に嘘になる。"
+  なく方針変更なので、ここではしない。ただし `content-length` は落とす:
+  引き継いだままだと上流への fetch が失敗し 502 になる（実測、route 側に記録）。"
   [req nsid]
-  (let [h (js/Headers. (.-headers req))]
-    (.delete h "host")
-    (.set h "content-type" "application/json")
-    (.set h "x-etzhayyim-bff" "cljs-worker")
-    (.set h "x-etzhayyim-xrpc-method" nsid)
-    h))
+  (clj->js (route/relay-headers
+             (map (fn [pair] [(aget pair 0) (aget pair 1)])
+                  (es6-iterator-seq (.entries (.-headers req))))
+             nsid)))
 
 (defn- proxy-xrpc
   "XRPC を MCP router へ中継する。移行前に deploy されていた SvelteKit の
