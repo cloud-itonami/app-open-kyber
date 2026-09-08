@@ -9,7 +9,7 @@
   ingress capability が qualify した時（今日は `:native-aot`/`:wasm-aot` とも
   pending —— ADR-2606290000）に最初に `.kotoba` へ移るのもここである。route 表は
   スカラと文字列に対する判断であり、それはその移行を生き延びる形そのものである。"
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def routes
   "公開面をデータとして持つ。ランディングページは**これ**を描くので、
@@ -48,7 +48,7 @@
   `:page` / `:health` / `:xrpc` / `:cors-preflight` / `:not-found` /
   `:method-not-allowed` / `:bad-request` のいずれか。"
   [method path]
-  (let [m (keyword (str/lower-case (or method "get")))
+  (let [m (keyword (str/lower (or method "get")))
         p (or path "")]
     (cond
       (and (= m :options) (str/starts-with? p "/xrpc/"))
@@ -117,8 +117,8 @@
   (into {"content-type" "application/json"
          "x-etzhayyim-bff" "cljs-worker"
          "x-etzhayyim-xrpc-method" nsid}
-        (comp (remove (fn [[k _]] (contains? drop-headers (str/lower-case k))))
-              (map (fn [[k v]] [(str/lower-case k) v])))
+        (comp (remove (fn [[k _]] (contains? drop-headers (str/lower k))))
+              (map (fn [[k v]] [(str/lower k) v])))
         in))
 
 (defn unwrap-mcp

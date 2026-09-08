@@ -1,6 +1,6 @@
 (ns openkyber.route-test
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [openkyber.route :as route]
             [openkyber.view :as view]))
 
