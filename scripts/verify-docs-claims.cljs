@@ -25,7 +25,7 @@
 (def APP "etzhayyim-wasm-kyber-erp-kyb3rerp")
 
 (def claims
-  {:tracked-files 92
+  {:tracked-files 93
    :svelte-artifacts 0             ; no .svelte / svelte.config / svelte-dir file survives
    :sveltekit-compat-flags 0       ; nodejs_compat / nodejs_als were adapter-cloudflare's
    :appview-ts-files 0             ; the appview holds no TypeScript at all
