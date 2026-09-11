@@ -158,8 +158,8 @@ to `dist/worker.js`, which is what `wrangler.jsonc`'s `main` points at.
 ```bash
 # high-load builds are serialised workspace-wide -- go through the guard
 node ~/github/com-junkawasaki/scripts/resource-guard.mjs run build -- \
-  npx shadow-cljs release worker
-npx nbb scripts/smoke-worker.cljk dist/worker.js     # exercise the built bundle
+  amu compile --target wasm32-browser worker
+kbb --backend sci scripts/smoke-worker.cljk dist/worker.js     # exercise the built bundle
 cd etzhayyim-wasm-kyber-erp-kyb3rerp && npx wrangler deploy
 ```
 

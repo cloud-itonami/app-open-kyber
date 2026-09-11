@@ -19,7 +19,7 @@ Cloudflare のアカウントは要らない（deploy だけが要る。§5）�
 git clone git@github.com:cloud-itonami/app-open-kyber.git
 cd app-open-kyber
 REPO=$PWD
-npx --yes nbb scripts/verify-docs-claims.cljk .
+npx --yes kbb --backend sci scripts/verify-docs-claims.cljk .
 ```
 
 末尾が `OK` なら README の数値・存在・不在は tree と一致している。
@@ -56,7 +56,7 @@ cat > /tmp/run.cljs <<'EOF'
 (require '[cljs.test :refer [run-tests]] 'openkyber.route-test)
 (run-tests 'openkyber.route-test)
 EOF
-npx --yes nbb --classpath "$CP" /tmp/run.cljs
+npx --yes kbb --backend sci --classpath "$CP" /tmp/run.cljs
 ```
 
 実際の出力:
@@ -88,9 +88,9 @@ cat > /tmp/render.cljs <<'EOF'
                   :mcp-url "https://mcp.etzhayyim.com/xrpc/com.etzhayyim.mcp.message"}))
   (println "ok"))
 EOF
-DDS="$K/jp-go-digital-design-system" npx --yes nbb --classpath "$CP" /tmp/render.cljs
+DDS="$K/jp-go-digital-design-system" npx --yes kbb --backend sci --classpath "$CP" /tmp/render.cljs
 
-cd $K/design-quality && npx --yes nbb -m design-quality.cli score /tmp/ok-page.html --min 95
+cd $K/design-quality && npx --yes kbb --backend sci -m design-quality.cli score /tmp/ok-page.html --min 95
 ```
 
 実際の出力（末尾）:
@@ -120,7 +120,7 @@ resource governor）。直接叩かず、必ず guard 経由で:
 ```bash
 cd "$REPO"
 node ~/github/com-junkawasaki/scripts/resource-guard.mjs run build -- \
-  npx shadow-cljs release worker
+  amu compile --target wasm32-browser worker
 ls -la dist/worker.js
 ```
 
@@ -174,7 +174,7 @@ shadow の `:esm` 出力は、同じソースでも増分ビルドだと違う�
 ここが deploy されるものに触る唯一の検査である。
 
 ```bash
-cd "$REPO" && npx --yes nbb scripts/smoke-worker.cljk dist/worker.js
+cd "$REPO" && npx --yes kbb --backend sci scripts/smoke-worker.cljk dist/worker.js
 ```
 
 ```
