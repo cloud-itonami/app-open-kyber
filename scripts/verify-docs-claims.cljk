@@ -13,7 +13,7 @@
 ;; library). That number is a fence in both directions -- the library cannot grow
 ;; silently into the appview's job, and it cannot be quietly deleted either.
 ;;
-;; Usage:  nbb scripts/verify-docs-claims.cljs [<dir>]     (<dir> FIRST, default ".")
+;; Usage:  nbb scripts/verify-docs-claims.cljk [<dir>]     (<dir> FIRST, default ".")
 ;; Exit:   0 every claim holds · 1 a claim is false · 2 could not answer
 
 (require '["node:fs" :as fs]
@@ -187,8 +187,8 @@
     ;; real table) and NOT by forbidding a substring: forbidding "routeCount" anywhere
     ;; would be tripped by the docstring that explains the old defect. A check a comment
     ;; can fail is a check about prose.
-    (let [v (slurp* "src/openkyber/view.cljc")
-          w (slurp* "src/openkyber/worker.cljs")]
+    (let [v (slurp* "src/openkyber/view.cljk")
+          w (slurp* "src/openkyber/worker.cljk")]
       (if (or (nil? v) (nil? w))
         (undet! "view.cljc or worker.cljs unreadable")
         (check! :page-renders-route-table true

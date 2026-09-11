@@ -1,6 +1,6 @@
 {
   "name": "kotodama-kyb3rerp",
-  // Compiled from src/openkyber/worker.cljs by shadow-cljs (:target :esm).
+  // Compiled from src/openkyber/worker.cljk by shadow-cljs (:target :esm).
   // Before the cljs migration this pointed at svelte/.svelte-kit/cloudflare/_worker.js
   // -- a SvelteKit build output that is not in the tree and cannot be produced from it
   // (svelte/package.json's dependencies are `workspace:*`; there is no workspace here).

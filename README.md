@@ -7,7 +7,7 @@ never edits). Aligned to ISIC Rev.4 so every industry gets a tailored chart of a
 
 Extracted from `etzhayyim/root`'s `60-apps/etzhayyim-project-open-kyber`. **The appview
 migrated from TypeScript/Svelte to ClojureScript on 2026-08-19** (`docs/adr/0001`).
-Every number below is re-derived from the tree by `scripts/verify-docs-claims.cljs`.
+Every number below is re-derived from the tree by `scripts/verify-docs-claims.cljk`.
 
 ## Two things live here, and only one of them was migrated
 
@@ -48,9 +48,9 @@ silently and it cannot be quietly deleted either.
 ## deploy されるものは、いま読んでいるソースである
 
 ```
-src/openkyber/route.cljc    判断（どの handler が答えるか）  ← 純 .cljc、テスト対象
-src/openkyber/view.cljc     ページ（jp-go-dds の hiccup）    ← 純 .cljc、テスト対象
-src/openkyber/worker.cljs   Request/Response に触る唯一の層
+src/openkyber/route.cljk    判断（どの handler が答えるか）  ← 純 .cljc、テスト対象
+src/openkyber/view.cljk     ページ（jp-go-dds の hiccup）    ← 純 .cljc、テスト対象
+src/openkyber/worker.cljk   Request/Response に触る唯一の層
         ↓ shadow-cljs :target :esm
 dist/worker.js              ← wrangler.jsonc の "main" が指すもの
 ```
@@ -62,7 +62,7 @@ defect, **could not be produced from the tree either**: `svelte/package.json` de
 this repository has no workspace (measured: `npm install` → `EUNSUPPORTEDPROTOCOL
 Unsupported URL Type "workspace:"`).
 
-`scripts/verify-docs-claims.cljs` checks that shadow's output dir, wrangler's `main`, and
+`scripts/verify-docs-claims.cljk` checks that shadow's output dir, wrangler's `main`, and
 the exported namespace still agree, and fails when they stop agreeing.
 
 ## 公開ルート
@@ -97,7 +97,7 @@ the exported namespace still agree, and fails when they stop agreeing.
 | 面 | ファイル |
 |---|---|
 | 判断・描画・edge | `src/openkyber/{route.cljc, view.cljc, worker.cljs}` |
-| テスト | `test/openkyber/route_test.cljc`（6 tests / 28 assertions） |
+| テスト | `test/openkyber/route_test.cljk`（6 tests / 28 assertions） |
 | ビルド | `deps.edn` / `shadow-cljs.edn` |
 | Worker 設定 | `etzhayyim-wasm-kyber-erp-kyb3rerp/wrangler.jsonc` |
 | actor 記述子 | `etzhayyim-wasm-kyber-erp-kyb3rerp/{kotodama.jsonld, etzhayyim.json}` |
@@ -211,7 +211,7 @@ deploy 先も中継先も、いま存在しない。`/xrpc/` は到達できな�
 ## 検証
 
 ```bash
-npx nbb scripts/verify-docs-claims.cljs .          # <dir> は先頭に置く
+npx nbb scripts/verify-docs-claims.cljk .          # <dir> は先頭に置く
 ```
 
 exit 0 = 全一致 / 1 = 食い違い / **2 = 判定できなかった**（0 と区別する）。
