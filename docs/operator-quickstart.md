@@ -19,7 +19,7 @@ Cloudflare のアカウントは要らない（deploy だけが要る。§5）�
 git clone git@github.com:cloud-itonami/app-open-kyber.git
 cd app-open-kyber
 REPO=$PWD
-npx --yes nbb scripts/verify-docs-claims.cljs .
+npx --yes nbb scripts/verify-docs-claims.cljk .
 ```
 
 末尾が `OK` なら README の数値・存在・不在は tree と一致している。
@@ -147,12 +147,12 @@ shadow の `:esm` 出力は、同じソースでも増分ビルドだと違う�
 し、壊れた bundle を書いていた ——「ビルドが通った」は検査ではなかった
 （**落ちようがなかった**）。
 
-この repo で実際に落として確かめた。`src/openkyber/worker.cljs:130` の
+この repo で実際に落として確かめた。`src/openkyber/worker.cljk:130` の
 `route/dispatch` を、存在しない `route/dispatch-nonexistent` に改名して再ビルド:
 
 ```
 ------ ERROR -------------------------------------------------------------------
- File: /private/tmp/app-open-kyber-cljs/src/openkyber/worker.cljs:130:44
+ File: /private/tmp/app-open-kyber-cljs/src/openkyber/worker.cljk:130:44
 ```
 
 | | exit | `dist/worker.js` sha256 | bytes |
@@ -174,7 +174,7 @@ shadow の `:esm` 出力は、同じソースでも増分ビルドだと違う�
 ここが deploy されるものに触る唯一の検査である。
 
 ```bash
-cd "$REPO" && npx --yes nbb scripts/smoke-worker.cljs dist/worker.js
+cd "$REPO" && npx --yes nbb scripts/smoke-worker.cljk dist/worker.js
 ```
 
 ```

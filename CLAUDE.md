@@ -25,10 +25,10 @@ on 2026-08-19 (`docs/adr/0001`). The actual tree is below.
 ```
 app-open-kyber/                                 # this repository
 ├── CLAUDE.md · README.md · README.edn · migration.edn
-├── src/openkyber/route.cljc                    # 判断（どの handler が答えるか）
-├── src/openkyber/view.cljc                     # ページ（jp-go-dds の hiccup）
-├── src/openkyber/worker.cljs                   # Request/Response に触る唯一の層
-├── test/openkyber/route_test.cljc
+├── src/openkyber/route.cljk                    # 判断（どの handler が答えるか）
+├── src/openkyber/view.cljk                     # ページ（jp-go-dds の hiccup）
+├── src/openkyber/worker.cljk                   # Request/Response に触る唯一の層
+├── test/openkyber/route_test.cljk
 ├── deps.edn · shadow-cljs.edn                  #   ↓ shadow-cljs :target :esm
 │                                               # dist/worker.js (generated, gitignored)
 ├── scripts/{smoke-worker,verify-docs-claims}.cljs
@@ -52,7 +52,7 @@ the Projector column below documents the monorepo deployment, not anything here.
 |---|---|---|
 | **nanoid** | `kyb3rerp` | `kyb3proj` |
 | **AT bot DID** | `did:web:kyber.etzhayyim.com` | `did:web:kyber-projector.etzhayyim.com` |
-| **Runtime** | ClojureScript (`src/openkyber/worker.cljs` → shadow-cljs `:target :esm` → `dist/worker.js`) | TS Native |
+| **Runtime** | ClojureScript (`src/openkyber/worker.cljk` → shadow-cljs `:target :esm` → `dist/worker.js`) | TS Native |
 | **Write path** | none — the Worker relays `/xrpc/:nsid` to the MCP router and implements no ERP command | same + `com.etzhayyim.apps.apqc.apqcEvent` OCEL emit |
 | **Read path** | none — see above. The ERP read/write implementation is the `kotoba/` library, which does not go through this Worker | Kysely + Hyperdrive |
 | **UI** | server-rendered page on `jp-go-dds` (デジタル庁デザインシステム) | headless (XRPC only) |
@@ -152,14 +152,14 @@ ERP write (createJournalEntry etc.)
 
 ## Build & Deploy
 
-The appview is ClojureScript. `shadow-cljs` compiles `src/openkyber/worker.cljs`
+The appview is ClojureScript. `shadow-cljs` compiles `src/openkyber/worker.cljk`
 to `dist/worker.js`, which is what `wrangler.jsonc`'s `main` points at.
 
 ```bash
 # high-load builds are serialised workspace-wide -- go through the guard
 node ~/github/com-junkawasaki/scripts/resource-guard.mjs run build -- \
   npx shadow-cljs release worker
-npx nbb scripts/smoke-worker.cljs dist/worker.js     # exercise the built bundle
+npx nbb scripts/smoke-worker.cljk dist/worker.js     # exercise the built bundle
 cd etzhayyim-wasm-kyber-erp-kyb3rerp && npx wrangler deploy
 ```
 
@@ -181,7 +181,7 @@ built with `pnpm build`. Both halves were false, and the migration removed the t
   plugin, which takes its entry from `src/app.html` + `src/routes/` and never reads a
   root `index.html`; nothing under `src/routes/` imports `App.svelte`.
 
-The page is now server-rendered by `src/openkyber/view.cljc` on `jp-go-dds`. See
+The page is now server-rendered by `src/openkyber/view.cljk` on `jp-go-dds`. See
 `docs/adr/0001` for the measurements.
 
 ## Relationship to Other Projects

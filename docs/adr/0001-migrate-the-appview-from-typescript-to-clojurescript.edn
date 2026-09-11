@@ -74,9 +74,9 @@ MCP router への中継 1 本だけである。
 
 **appview を ClojureScript に移し、appview の TypeScript と Svelte を撤去する。**
 
-    src/openkyber/route.cljc    判断（どの handler が答えるか）
-    src/openkyber/view.cljc     ページ（jp-go-dds の hiccup）
-    src/openkyber/worker.cljs   Request/Response に触る唯一の層
+    src/openkyber/route.cljk    判断（どの handler が答えるか）
+    src/openkyber/view.cljk     ページ（jp-go-dds の hiccup）
+    src/openkyber/worker.cljk   Request/Response に触る唯一の層
             ↓ shadow-cljs :target :esm
     dist/worker.js              wrangler.jsonc の main が指すもの
 
@@ -173,10 +173,10 @@ app 固有 CSS は 3 行。CSS は `shadow.resource/inline` で bundle に焼く
 
 - `openkyber.route-test`: **6 tests / 28 assertions、0 failures**（nbb、ビルド不要）
 - ページ描画 → design-quality **100.00**、gate PASS（10 軸）、`--extra-axes` でも 100.00
-- `scripts/verify-docs-claims.cljs`: 全 claim PASS、exit 0
+- `scripts/verify-docs-claims.cljk`: 全 claim PASS、exit 0
 - ビルド: `shadow-cljs release worker` が **55 files / 12 compiled / 0 warnings** で
   通り、`dist/worker.js`（246,518 バイト）を出した
-- `scripts/smoke-worker.cljs` がその bundle を import して **21 項目**を確認
+- `scripts/smoke-worker.cljk` がその bundle を import して **21 項目**を確認
 - **workerd（`wrangler dev --local`）で実際に起こした**: `GET /` 200 text/html
   （DADS の CSS 45 箇所と route 表を含む）/ `GET /health` 200
   `{\"ok\":true,\"app\":\"open-kyber\",\"runtime\":\"cljs\",\"routes\":[…]}` /
