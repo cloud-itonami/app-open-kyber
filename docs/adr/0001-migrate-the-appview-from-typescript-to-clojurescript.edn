@@ -39,7 +39,7 @@ brief が予告していなかった形。
    いたのはこれのビルド出力。**deploy 対象ではあった**（ビルドできないが）。
 2. **7-app の Vite SPA**（`index.html` → `src/main.ts` → `App.svelte` →
    `src/apps/{Appview,Drive,Mailer,Organizer,Overview,Projector}.svelte` +
-   `src/lib/{apps,store.svelte,xrpc}.ts`）—— `CLAUDE.md` が『Hono + Svelte
+   `src/lib/{apps,store.svelte,xrpc}.ts`）—— `AGENTS.md` が『Hono + Svelte
    read/write SPA』と呼んでいたもの。**どの bundle にも入っていない**:
    `vite.config.ts` は `sveltekit()` プラグインを読み込んでおり、SvelteKit は
    entry を `src/app.html` + `src/routes/` から取ってルートの `index.html` を
@@ -61,7 +61,7 @@ deploy されていた 1 のページは `Kyber Erp Kyb3rerp` と `Routes 0` を
 
 ### 発見 4 — 設計文書が現状と合っていない
 
-`CLAUDE.md` の Folder Layout は projector appview
+`AGENTS.md` の Folder Layout は projector appview
 （`etzhayyim-wasm-kyber-projector-kyb3proj/`）を含むが、**この repo に無い**
 （抽出時に運ばれなかった）。App Identity 表は Runtime を
 『TS Native (`src/app.ts` + `@etzhayyim/kotodama-host-sdk` → esbuild)』、UI を
@@ -148,7 +148,7 @@ Dockerfile が残る。理由を README に測定つきで書いた。
 - 発見 2 も消えた。app は 1 つで、それが deploy される。
 - 発見 3 も構造的に消えた。ページは route 表（`openkyber.route/routes`）を引数で
   受け取って描く。表示と実際に答えるものが同じ 1 つの値から出る。
-- 発見 4 は文書を直した（`CLAUDE.md` の Folder Layout・App Identity・Svelte SPA 節、
+- 発見 4 は文書を直した（`AGENTS.md` の Folder Layout・App Identity・Svelte SPA 節、
   ルート `README.md`）。projector が此処に無いことも明記した。
 
 ### 移行前の面との差分（黙って変えていない）
@@ -224,7 +224,7 @@ cold cache から再ビルドし、bundle の sha256 が mutation 前と一致�
   検証器がファイル数を両方向に固定している。
 - 継承した 4 ファイル（`README.edn` / `migration.edn` / `kotodama.jsonld` /
   `etzhayyim.json`）は 1 バイトも変えていない（sha256 を検証器に固定）。
-  `wrangler.jsonc` と `CLAUDE.md` は意図的に変更したので、hash ではなく**内容**で
+  `wrangler.jsonc` と `AGENTS.md` は意図的に変更したので、hash ではなく**内容**で
   検査する —— 意図的な変更と勝手な変更を区別するため。
 - **Worker と ERP ライブラリは繋がっていない。** 移行前も繋がっていなかった
   （繋ぐはずの `src/app.ts` がビルドできなかった）。移行はこれを直さない。

@@ -39,9 +39,9 @@
    :shadow-export "openkyber.worker/handler"})
 
 ;; Inherited files this repository still carries BYTE-IDENTICAL.
-;; wrangler.jsonc and CLAUDE.md left this set DELIBERATELY -- wrangler.jsonc because the
+;; wrangler.jsonc and AGENTS.md left this set DELIBERATELY -- wrangler.jsonc because the
 ;; migration repointed main, dropped the assets block and the SvelteKit compat flags;
-;; CLAUDE.md because it described the runtime as "TS Native (src/app.ts)" and the UI as
+;; AGENTS.md because it described the runtime as "TS Native (src/app.ts)" and the UI as
 ;; "Hono + Svelte CSR", both of which the migration made false. Both are checked by
 ;; CONTENT below instead of by hash, so a deliberate edit and a stray one stay distinct.
 (def preserved
@@ -123,10 +123,10 @@
                                 (str/includes? % "/svelte/"))
                            files)))
 
-    ;; CLAUDE.md no longer claims a TypeScript runtime or a Svelte SPA frontend
-    (let [c (slurp* "CLAUDE.md")]
+    ;; AGENTS.md no longer claims a TypeScript runtime or a Svelte SPA frontend
+    (let [c (slurp* "AGENTS.md")]
       (if (nil? c)
-        (undet! "CLAUDE.md unreadable")
+        (undet! "AGENTS.md unreadable")
         (check! :claude-md-describes-cljs true
                 (and (not (str/includes? c "| **UI** | Hono + Svelte CSR"))
                      (not (str/includes? c "TS Native (`src/app.ts`"))
