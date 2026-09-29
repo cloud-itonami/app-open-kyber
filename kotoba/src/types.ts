@@ -18,7 +18,7 @@
  *   SENSITIVE / PII (kotoba E2E, com.etzhayyim.encrypted.record)
  *     - employee           HR record: name / email / department / position +
  *                          salary (Tier-3 PII, explicitly "Not in Scope" for
- *                          plaintext per open-kyber CLAUDE.md). Sealed via
+ *                          plaintext per open-kyber AGENTS.md). Sealed via
  *                          sdk.encryptedWrite (read-cap = owner DID + explicit
  *                          recipients, e.g. the HR department DID). The substrate
  *                          never sees salary / personal contact in plaintext.

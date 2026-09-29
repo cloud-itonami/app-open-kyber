@@ -24,7 +24,7 @@ on 2026-08-19 (`docs/adr/0001`). The actual tree is below.
 
 ```
 app-open-kyber/                                 # this repository
-├── CLAUDE.md · README.md · README.edn · migration.edn
+├── AGENTS.md · README.md · README.edn · migration.edn
 ├── src/openkyber/route.cljk                    # 判断（どの handler が答えるか）
 ├── src/openkyber/view.cljk                     # ページ（jp-go-dds の hiccup）
 ├── src/openkyber/worker.cljk                   # Request/Response に触る唯一の層
@@ -61,7 +61,7 @@ the Projector column below documents the monorepo deployment, not anything here.
 
 | Artifact | License |
 |---|---|
-| `CLAUDE.md`, `README.md`, `PROJECT.jsonld`, `etzhayyim-wasm-kyber-erp-kyb3rerp/**`, `etzhayyim-wasm-kyber-projector-kyb3proj/**` | Apache-2.0 |
+| `AGENTS.md`, `README.md`, `PROJECT.jsonld`, `etzhayyim-wasm-kyber-erp-kyb3rerp/**`, `etzhayyim-wasm-kyber-projector-kyb3proj/**` | Apache-2.0 |
 | Deployed `kyber.etzhayyim.com` + `kyber-projector.etzhayyim.com` (and legacy `*.etzhayyim.com`) tenant data, Signal keys, Hyperdrive creds | Proprietary (not in repo) |
 | `00-contracts/lexicons/com/etzhayyim/kyber/**`, `00-contracts/lexicons/com/etzhayyim/app/kyber/**` | Apache-2.0 (contract) |
 | `90-docs/adr/0025-kyber-apqc-bpmn-projector-consolidation.md` | Apache-2.0 (governance record) |

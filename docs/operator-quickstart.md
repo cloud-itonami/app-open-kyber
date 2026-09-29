@@ -114,7 +114,7 @@ gate: aggregate 100.00 >= min 95.00 -> PASS
 
 ## 4. bundle をビルドする
 
-**高負荷ビルドは同時 1 本に制限されている**（superproject `CLAUDE.md` の
+**高負荷ビルドは同時 1 本に制限されている**（superproject `AGENTS.md` の
 resource governor）。直接叩かず、必ず guard 経由で:
 
 ```bash
@@ -275,6 +275,6 @@ grep 版はこの節のコメント自身に当たって落ちない。
   script を `onlyBuiltDependencies` allowlist 無しでは実行しないため
   （`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`）、この walk では走らせていない。
   移行対象外の component なので回避策も入れていない。
-- **projector appview**（`…-kyb3proj`）。`CLAUDE.md` の元の Folder Layout に
+- **projector appview**（`…-kyb3proj`）。`AGENTS.md` の元の Folder Layout に
   在ったが、この repository には抽出されていない。
 - **deploy**（§5）。

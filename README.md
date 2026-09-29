@@ -104,7 +104,7 @@ the exported namespace still agree, and fails when they stop agreeing.
 | ERP ライブラリ | `kotoba/`（TypeScript、**移行対象外**。上記） |
 | ISIC packs | `industry-packs/isic-packs.kotoba.edn` |
 | WASM actor | `wasm/kyber-erp-core/`（Rust、kotoba host 経路。Worker とは無関係） |
-| 設計 | `CLAUDE.md` / `R2-WORKER-WIRING.md` / `SUITE-PY-WASM-MIGRATION.md` / `WORKER-AS-WASM-ACTOR-MIGRATION.md` |
+| 設計 | `AGENTS.md` / `R2-WORKER-WIRING.md` / `SUITE-PY-WASM-MIGRATION.md` / `WORKER-AS-WASM-ACTOR-MIGRATION.md` |
 | 文書 | `README.md` / `docs/operator-quickstart.md` / `docs/adr/*.edn` |
 
 **appview の TypeScript は 0 本、正本言語（`.cljs`/`.cljc`）が 4 本。** 移行前は appview に
@@ -133,7 +133,7 @@ TypeScript が 11 本（`src/app.ts` 1 + `svelte/` 7 + `e2e/` 3）と `.svelte` 
    （`workspace:*`）。移植したのはこの面の挙動である。
 2. **7-app の Vite SPA**（`index.html` → `src/main.ts` → `App.svelte` →
    `src/apps/{Appview,Drive,Mailer,Organizer,Overview,Projector}.svelte` + `src/lib/`）
-   —— `CLAUDE.md` が "Hono + Svelte read/write SPA" と呼んでいたもの。**どの bundle にも
+   —— `AGENTS.md` が "Hono + Svelte read/write SPA" と呼んでいたもの。**どの bundle にも
    入っていない**: `vite.config.ts` は `sveltekit()` プラグインを読み込んでおり、
    SvelteKit は entry を `src/app.html` + `src/routes/` から取ってルートの `index.html` を
    読まない。そして `src/routes/` 配下から `App.svelte` への import は **0 件**である。
